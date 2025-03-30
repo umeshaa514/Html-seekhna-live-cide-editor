@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Code Editor</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
+        textarea { width: 90%; height: 100px; margin: 10px 0; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+        iframe { width: 90%; height: 300px; border: 1px solid #ccc; background-color: white; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Live Code Editor</h2>
+
+    <label>HTML:</label>
+    <textarea id="htmlCode" onkeyup="updatePreview()"></textarea>
+
+    <label>CSS:</label>
+    <textarea id="cssCode" onkeyup="updatePreview()"></textarea>
+
+    <label>JavaScript:</label>
+    <textarea id="jsCode" onkeyup="updatePreview()"></textarea>
+
+    <h3>Output:</h3>
+    <iframe id="output"></iframe>
+
+    <button onclick="saveCode()">Save Code</button>
+
+    <h3>Load Code:</h3>
+    <input type="text" id="codeId" placeholder="Enter Code ID">
+    <button onclick="loadCode()">Load</button>
+
+    <script>
+        function updatePreview() {
+            let html = document.getElementById("htmlCode").value;
+            let css = document.getElementById("cssCode").value;
+            let js = document.getElementById("jsCode").value;
+            let iframe = document.getElementById("output").contentWindow.document;
+
+            iframe.open();
+            iframe.write(`
+                <html>
+                <head><style>${css}</style></head>
+                <body>${html}<script>${js}<\/script></body>
+                </html>
+            `);
+            iframe.close();
+        }
+
+        function saveCode() {
+            let html = document.getElementById("htmlCode").value;
+            let css = document.getElementById("cssCode").value;
+            let js = document.getElementById("jsCode").value;
+
+            fetch("save.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `html=${encodeURIComponent(html)}&css=${encodeURIComponent(css)}&js=${encodeURIComponent(js)}`
+            })
+            .then(response => response.text())
+            .then(data => alert("Your Code ID: " + data))
+            .catch(error => alert("Error: " + error));
+        }
+
+        function loadCode() {
+            let codeId = document.getElementById("codeId").value;
+
+            fetch("load.php?id=" + codeId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.html !== undefined) {
+                    document.getElementById("htmlCode").value = data.html;
+                    document.getElementById("cssCode").value = data.css;
+                    document.getElementById("jsCode").value = data.js;
+                    updatePreview();
+                } else {
+                    alert("Invalid Code ID");
+                }
+            })
+            .catch(error => alert("Error: " + error));
+        }
+    </script>
+</body>
+</html>
